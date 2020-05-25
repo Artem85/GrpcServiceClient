@@ -2,6 +2,7 @@
 using GrpcService;
 using System;
 using System.Net.Http;
+using System.Security.Authentication;
 using System.Threading.Tasks;
 
 namespace GrpcServiceClient
@@ -10,20 +11,16 @@ namespace GrpcServiceClient
     {
         static async Task Main(string[] args)
         {
-            var httpClientHandler = new HttpClientHandler();
+            AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
 
-            httpClientHandler.ServerCertificateCustomValidationCallback =
-                HttpClientHandler.DangerousAcceptAnyServerCertificateValidator;
-            var httpClient = new HttpClient(httpClientHandler);
-
-            // The port number(5001) must match the port of the gRPC server.
-            using var channel = GrpcChannel.ForAddress("https://localhost:5001"
-                , new GrpcChannelOptions { HttpClient = httpClient }
-                );
+            using var channel = GrpcChannel.ForAddress("http://localhost:5000");
             var client = new Greeter.GreeterClient(channel);
 
+            Console.WriteLine("Type you name, please:");
+            var name = Console.ReadLine();
+
             var reply = await client.SayHelloAsync(
-                              new HelloRequest { Name = "GreeterClient" });
+                              new HelloRequest { Name = name });
             Console.WriteLine("Greeting: " + reply.Message);
             Console.WriteLine("Press any key to exit...");
             Console.ReadKey();
